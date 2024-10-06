@@ -1,20 +1,18 @@
 /*eslint-disable*/
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
   View,
+  Text,
   TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
 } from 'react-native';
-import {Header} from '../components/Header';
+import {Shield, UserCheck, FileText, Camera} from 'lucide-react-native';
+import {useNavigation} from '@react-navigation/native';
 import usePhantomConnection from '../hooks/WalletContextProvider';
 import EnhancedDarkThemeBackground from './EnhancedDarkThemeBackground';
-import {useNavigation} from '@react-navigation/native';
-export default function ConnectWallet() {
-  const [balance, setBalance] = useState(0);
-  const [modalVisible, setModalVisible] = useState(false);
 
+const ConnectWallet = () => {
   const {connect, phantomWalletPublicKey} = usePhantomConnection();
   const navigation = useNavigation();
 
@@ -24,92 +22,154 @@ export default function ConnectWallet() {
         publicKey: phantomWalletPublicKey.toString(),
       });
     }
-  }, [phantomWalletPublicKey]);
+  }, [phantomWalletPublicKey, navigation]);
 
-  const Children = ({}) => {
+  const Children = () => {
     return (
-      <View style={styles.mainContainer}>
-        <View style={styles.mainContainer}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <>
-              <Header />
-              <View style={styles.connectButtonContainer}>
-                <TouchableOpacity
-                  activeOpacity={0.5}
-                  onPress={connect}
-                  style={{
-                    width: '80%',
-                    borderRadius: 15,
-                    borderWidth: 1,
-                    borderColor: 'white',
-                    padding: 15,
-                    alignItems: 'center',
-                    marginTop: -120,
-                  }}>
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: 20,
-                      fontWeight: 'bold',
-                    }}>
-                    Connect
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          </ScrollView>
+      <SafeAreaView style={styles.container}>
+        <View
+          style={{
+            height: '40%',
+            width: '100%',
+            backgroundColor: '#4CAF50',
+            borderBottomEndRadius: 50,
+            borderBottomStartRadius: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Text style={styles.appName}>DeDocs</Text>
+          <Text style={styles.title}>Secure Document Signing with Solana</Text>
         </View>
-      </View>
+        <View style={styles.content}>
+          <View
+            style={[
+              styles.features,
+              {
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                borderRadius: 20,
+                borderColor: 'white',
+                borderWidth: 1,
+                padding: 15,
+              },
+            ]}>
+            <Feature
+              icon={<Shield color="#4CAF50" size={24} />}
+              text="Immutable blockchain records"
+            />
+            <Feature
+              icon={<UserCheck color="#4CAF50" size={24} />}
+              text="Verified digital identities"
+            />
+            <Feature
+              icon={<FileText color="#4CAF50" size={24} />}
+              text="Tamper-proof documents"
+            />
+            <Feature
+              icon={<Camera color="#4CAF50" size={24} />}
+              text="Photo proof on IPFS"
+            />
+          </View>
+
+          <Text style={styles.description}>
+            Transform your document signing process with DeDocs. Connect your
+            wallet to access blockchain-secured signatures, ensuring the highest
+            level of authenticity and trust for all your important agreements.
+          </Text>
+
+          <TouchableOpacity style={styles.button} onPress={connect}>
+            <Text style={styles.buttonText}>Connect Wallet</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.securityNote}>
+            Your security is our priority. All transactions are encrypted and
+            secured by <Text>Solana</Text> blockchain technology.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   };
+
   return <EnhancedDarkThemeBackground children={<Children />} />;
-}
+};
+
+const Feature = ({icon, text}) => (
+  <View style={styles.feature}>
+    {icon}
+    <Text style={styles.featureText}>{text}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    height: '100%',
-    padding: 16,
+  container: {
     flex: 1,
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // padding: 20,
   },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  connectButtonContainer: {
+  content: {
+    width: '100%',
+
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    borderWidth: 1,
-    borderColor: 'white',
-    borderRadius: 30,
-    padding: 8,
-  },
-  modalContainer: {
-    backgroundColor: 'white',
     padding: 20,
-    margin: 20,
-    borderRadius: 10,
   },
-  imagePreview: {
+  appName: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#E0E0E0',
+    marginBottom: 30,
+  },
+  features: {
     width: '100%',
-    height: 200,
-    resizeMode: 'contain',
-    marginVertical: 16,
+    marginBottom: 30,
   },
-  button: {
-    marginVertical: 8,
-  },
-  inputContainer: {
+  feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 15,
   },
-  input: {
-    flex: 1,
-    marginRight: 8,
+  featureText: {
+    marginLeft: 10,
+    fontSize: 18,
+    color: '#E0E0E0',
+  },
+  description: {
+    textAlign: 'center',
+    color: '#CCCCCC',
+    marginBottom: 30,
+    lineHeight: 24,
+  },
+  button: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    elevation: 3,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  securityNote: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#A0A0A0',
+    fontSize: 12,
   },
 });
+
+export default ConnectWallet;

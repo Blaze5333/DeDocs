@@ -6,7 +6,7 @@ export function Header() {
     <>
       <View style={[styles.background]}>
         <Text style={styles.title} className="text-white">
-          DeDox.
+          DeDocs.
         </Text>
         <Text style={styles.subtitle}>
           Secure, Decentralized Document Signing for a Trustless Future

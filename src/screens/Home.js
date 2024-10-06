@@ -244,6 +244,7 @@ export default function Home({route}) {
                   borderWidth: 1,
                 }}
                 renderItem={({item}) => {
+                  console.log('item', item);
                   return (
                     <TouchableOpacity
                       activeOpacity={0.7}

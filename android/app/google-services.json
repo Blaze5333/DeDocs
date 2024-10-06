@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "155085825098",
+    "project_id": "dedocs-6d57f",
+    "storage_bucket": "dedocs-6d57f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:155085825098:android:74ce0c06973b443936b2b3",
+        "android_client_info": {
+          "package_name": "com.dedocs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtT_VTckoj6FOnAR0euPjqI3OQgSHclSE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

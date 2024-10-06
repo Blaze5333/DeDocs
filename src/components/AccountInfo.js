@@ -38,7 +38,7 @@ export default function AccountInfo({publicKey}) {
     <View style={[styles.container]}>
       <View style={styles.content}>
         <Text style={styles.title} className="text-white">
-          DeDox.
+          DeDocs.
         </Text>
         <View style={styles.walletCard}>
           <ImageBackground

@@ -5,6 +5,10 @@ import ConnectWallet from './src/screens/ConnectWallet';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from './src/screens/Home';
+import AddUser from './src/screens/AddUser';
+import AddImage from './src/screens/AddImage';
+import UploadDoc from './src/screens/UploadDoc';
+import DocumentDetail from './src/screens/DocumentDetail';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +24,10 @@ export default function App() {
           initialRouteName="ConnectWallet">
           <Stack.Screen name="ConnectWallet" component={ConnectWallet} />
           <Stack.Screen name="Home" component={Home} />
+          <Stack.Screen name="DocumentDetail" component={DocumentDetail} />
+          <Stack.Screen name="AddImage" component={AddImage} />
+          <Stack.Screen name="AddUser" component={AddUser} />
+          <Stack.Screen name="UploadDoc" component={UploadDoc} />
         </Stack.Navigator>
       </WalletContextProvider>
     </NavigationContainer>

@@ -27,12 +27,13 @@ import {useNavigation} from '@react-navigation/native';
 
 const NETWORK = clusterApiUrl('devnet');
 
-const onConnectRedirectLink = 'myapp://onConnect';
-const onDisconnectRedirectLink = 'myapp://onDisconnect';
-const onSignAndSendTransactionRedirectLink = 'myapp://onSignAndSendTransaction';
-const onSignAllTransactionsRedirectLink = 'myapp://onSignAllTransactions';
-const onSignTransactionRedirectLink = 'myapp://onSignTransaction';
-const onSignMessageRedirectLink = 'myapp://onSignMessage';
+const onConnectRedirectLink = 'dedocs://onConnect';
+const onDisconnectRedirectLink = 'dedocs://onDisconnect';
+const onSignAndSendTransactionRedirectLink =
+  'dedocs://onSignAndSendTransaction';
+const onSignAllTransactionsRedirectLink = 'dedocs://onSignAllTransactions';
+const onSignTransactionRedirectLink = 'dedocs://onSignTransaction';
+const onSignMessageRedirectLink = 'dedocs://onSignMessage';
 
 const buildUrl = (path, params) =>
   `https://phantom.app/ul/v1/${path}?${params.toString()}`;
@@ -129,7 +130,7 @@ export const WalletContextProvider = ({children}) => {
 
     console.log('deepLink', deepLink);
     const url = new URL(
-      deepLink.replace('myapp://', 'https://phantom.app/ul/v1/'),
+      deepLink.replace('dedocs://', 'https://phantom.app/ul/v1/'),
     );
     const params = url.searchParams;
     console.log('params', params);
