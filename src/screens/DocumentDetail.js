@@ -1,59 +1,57 @@
-import React, {useEffect, useState} from 'react';
+/*eslint-disable*/
+import React, { useState, useEffect } from 'react';
 import {
-  ImageBackground,
-  StatusBar,
-  TouchableOpacity,
   View,
   Text,
   Image,
-  Modal,
   ScrollView,
+  TouchableOpacity,
+  Modal,
   Dimensions,
+  StyleSheet,
+  StatusBar,
   ToastAndroid,
-  Alert,
 } from 'react-native';
-import EnhancedDarkThemeBackground from './EnhancedDarkThemeBackground';
-import {
-  GestureHandlerRootView,
-  PanGestureHandler,
-} from 'react-native-gesture-handler';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, {
-  Extrapolate,
-  interpolate,
-  runOnJS,
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
   useSharedValue,
+  useAnimatedStyle,
   withSpring,
-  withTiming,
+  interpolate,
+  Extrapolate,
+  runOnJS,
+  useAnimatedGestureHandler
 } from 'react-native-reanimated';
+import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { BN, Program } from '@project-serum/anchor';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {PublicKey, SystemProgram, Transaction} from '@solana/web3.js';
 import usePhantomConnection from '../hooks/WalletContextProvider';
 import {
   CONNECTION,
   getDocSignedPDA,
   getUserPDA,
-  imageURI,
   programId,
 } from '../components/constants';
-import {BN, Program} from '@project-serum/anchor';
 import idl from '../../contracts/idl/idl.json';
-import {Icon, IconButton} from 'react-native-paper';
-import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
+import EnhancedDarkThemeBackground from './EnhancedDarkThemeBackground';
+import { Chrome } from 'lucide-react-native';
+import { Icon as PIcon } from 'react-native-paper';
 
-const BUTTON_WIDTH = 300;
-const BUTTON_HEIGHT = 65;
-const SLIDER_WIDTH = 65;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BUTTON_WIDTH = SCREEN_WIDTH - 40;
+const BUTTON_HEIGHT = 60;
+const SLIDER_WIDTH = 60;
 
-export default function DocumentDetail({route}) {
-  const [docId, setdocId] = useState(route.params.docId);
-  const [signers, setsigners] = useState();
-  const [uploader, setuploader] = useState('');
-  const [imageUrl, setimageUrl] = useState(route.params.imageUri);
+const DocumentDetail = ({ route, navigation }) => {
+  const [docId, setDocId] = useState(route.params.docId);
+  const [signers, setSigners] = useState();
+  const [uploader, setUploader] = useState(null);
+  const [imageUrl, setImageUrl] = useState(route.params.imageUri);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const {phantomWalletPublicKey, signAllTransactions, signAndSendTransaction} =
+  const { phantomWalletPublicKey, signAllTransactions, signAndSendTransaction } =
     usePhantomConnection();
   const pubKey = new PublicKey(phantomWalletPublicKey);
   const customProvider = {
@@ -63,7 +61,8 @@ export default function DocumentDetail({route}) {
     connection: CONNECTION,
   };
   const program = new Program(idl, programId.toString(), customProvider);
-  const navigation = useNavigation();
+
+  const translateX = useSharedValue(0);
 
   useEffect(() => {
     fetchDocumentDetails();
@@ -77,7 +76,7 @@ export default function DocumentDetail({route}) {
       const uploaderData = await program.account.userPhoto.fetch(uploaderPDA);
       console.log('Uploader data fetched:', uploaderData);
 
-      setuploader({
+      setUploader({
         user: route.params.uploader,
         imageUrl: uploaderData.imageHash.toString(),
       });
@@ -127,7 +126,7 @@ export default function DocumentDetail({route}) {
       }
 
       console.log('Array', signerArray);
-      setsigners(signerArray);
+      setSigners(signerArray);
     } catch (error) {
       console.error('Error in fetchDocumentDetails:', error);
     }
@@ -135,7 +134,7 @@ export default function DocumentDetail({route}) {
 
   const signDocument = async () => {
     if (!phantomWalletPublicKey) {
-      Alert.alert('Error', 'Wallet not connected');
+      ToastAndroid.show('Wallet not connected', ToastAndroid.SHORT);
       return;
     }
     try {
@@ -175,447 +174,316 @@ export default function DocumentDetail({route}) {
         .instruction();
       transaction.add(tx);
       transaction.feePayer = pubKey;
-      const {blockhash, lastValidBlockHeight} =
+      const { blockhash, lastValidBlockHeight } =
         await CONNECTION.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = blockhash;
       try {
         const signedTransaction = await signAndSendTransaction(transaction);
         console.log('Signed transaction:', signedTransaction);
-        Alert.alert('Success', 'Document signed successfully');
-        navigation.navigate('Home', {publicKey: pubKey.toString()});
+        ToastAndroid.show('Document signed successfully', ToastAndroid.SHORT);
+        navigation.navigate('Home', { publicKey: pubKey.toString() });
       } catch (signError) {
         console.error('Error signing or sending transaction:', signError);
-        Alert.alert(
-          'Error',
+        ToastAndroid.show(
           'Failed to sign or send transaction: ' + signError.message,
+          ToastAndroid.SHORT,
         );
       }
     } catch (error) {
       console.error('Error preparing transaction:', error);
-      Alert.alert('Error', 'Failed to prepare transaction: ' + error.message);
+      ToastAndroid.show('Failed to prepare transaction: ' + error.message, ToastAndroid.SHORT);
     }
   };
 
-  const Children = () => {
-    const ImageComponent = Animated.createAnimatedComponent(Image);
-    const [visible, setvisible] = useState(false);
-    // const address = '2ooqk3QB9KVqcwKE8EnxDNoUnTAMfTH43qmqtMA1T1zk';
-    const address = 'Ch57PUCAvh6SCZ3DNroq7gXH9a1svdkykVabscVxdsEC';
-    const x = useSharedValue(0);
-    const y = useSharedValue(0);
-    const width = Dimensions.get('screen').width;
-    const v1 = useSharedValue(0);
-    const v2 = useSharedValue(1);
-    const translateX = useSharedValue(0);
-    const sliderWidth = Dimensions.get('screen').width;
-
-    const gestureHandler = useAnimatedGestureHandler({
-      onStart: (_, context) => {
-        context.startX = translateX.value;
-      },
-      onActive: (event, context) => {
-        translateX.value = Math.max(
-          0,
-          Math.min(
-            context.startX + event.translationX,
-            BUTTON_WIDTH - SLIDER_WIDTH,
-          ),
-        );
-      },
-      onEnd: () => {
-        if (translateX.value > BUTTON_WIDTH - SLIDER_WIDTH - 150) {
-          translateX.value = withSpring(BUTTON_WIDTH - SLIDER_WIDTH - 150);
-          runOnJS(signDocument)();
-        } else {
-          translateX.value = withSpring(0);
-        }
-      },
-    });
-
-    const sliderStyle = useAnimatedStyle(() => ({
-      transform: [{translateX: translateX.value}],
-    }));
-
-    const textOpacity = useAnimatedStyle(() => ({
-      opacity: interpolate(
-        translateX.value,
-        [0, BUTTON_WIDTH - SLIDER_WIDTH],
-        [1, 0],
-        Extrapolate.CLAMP,
-      ),
-    }));
-
-    const iconStyle = useAnimatedStyle(() => {
-      const rotate = interpolate(
-        translateX.value,
-        [0, BUTTON_WIDTH - SLIDER_WIDTH],
-        [0, 360],
-        Extrapolate.CLAMP,
+  const gestureHandler = useAnimatedGestureHandler({
+    onStart: (_, context) => {
+      context.startX = translateX.value;
+    },
+    onActive: (event, context) => {
+      translateX.value = Math.max(
+        0,
+        Math.min(context.startX + event.translationX, BUTTON_WIDTH - SLIDER_WIDTH)
       );
-      return {
-        transform: [{rotate: `${rotate}deg`}],
-      };
-    });
+    },
+    onEnd: () => {
+      if (translateX.value > BUTTON_WIDTH - SLIDER_WIDTH - 50) {
+        translateX.value = withSpring(BUTTON_WIDTH - SLIDER_WIDTH);
+        runOnJS(signDocument)();
+      } else {
+        translateX.value = withSpring(0);
+      }
+    },
+  });
 
-    const animationstyle = useAnimatedStyle(() => {
-      return {
-        transform: [{rotate: `${v1.value}deg`}],
-        width:
-          x.value > width / 2
-            ? withTiming(25, {duration: 500})
-            : withTiming(0, {duration: 500}),
-        height:
-          x.value > width / 2
-            ? withTiming(25, {duration: 500})
-            : withTiming(0, {duration: 500}),
-      };
-    });
+  const sliderStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
-    const animationstyle2 = useAnimatedStyle(() => {
-      return {
-        transform: [{rotate: `${v1.value}deg`}],
-        width:
-          x.value > width / 2
-            ? withTiming(0, {duration: 500})
-            : withTiming(28, {duration: 500}),
-        height:
-          x.value > width / 2
-            ? withTiming(0, {duration: 500})
-            : withTiming(28, {duration: 500}),
-      };
-    });
+  const textOpacity = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      translateX.value,
+      [0, BUTTON_WIDTH - SLIDER_WIDTH],
+      [1, 0],
+      Extrapolate.CLAMP
+    ),
+  }));
 
-    const animatedStyle3 = useAnimatedStyle(() => {
-      return {
-        opacity: v2.value,
-      };
-    });
-
-    return (
-      <ScrollView
-        style={{
-          paddingTop: StatusBar.currentHeight + 20,
-          padding: 20,
-          flex: 1,
-        }}>
-        {imageUrl && (
-          <Modal
-            visible={visible}
-            transparent
-            style={{paddingTop: StatusBar.currentHeight + 20}}>
-            <IconButton
-              icon="close"
-              size={30}
-              iconColor="#fff"
-              onPress={() => {
-                setvisible(false);
-              }}
-            />
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 20,
-              }}>
-              <Image
-                style={{width: '100%', height: '90%', resizeMode: 'stretch'}}
-                source={{uri: imageUrl}}
-              />
-            </View>
-          </Modal>
-        )}
-        {imageUrl && (
-          <View
-            style={{
-              width: '100%',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <View
-              style={{
-                position: 'absolute',
-                zIndex: 2,
-                height: 350,
-                width: 250,
-                borderRadius: 25,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <TouchableOpacity
-                onPress={() => {
-                  setvisible(true);
-                }}
-                style={{
-                  position: 'absolute',
-                  zIndex: 3,
-                  borderWidth: 1,
-                  borderColor: 'white',
-                  width: 200,
-                  borderRadius: 20,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 15,
-                }}>
-                <Icon source="eye" color="white" size={27} />
-                <Text
-                  style={{
-                    color: 'white',
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    marginLeft: 15,
-                  }}>
-                  View Document
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <ImageBackground
-              source={{uri: imageUrl}}
-              resizeMode="cover"
-              style={{
-                height: 350,
-                width: 250,
-                borderRadius: 25,
-                overflow: 'hidden',
-                opacity: 1,
-              }}></ImageBackground>
-          </View>
-        )}
-        <View style={{flex: 1, width: '100%', gap: 10, marginTop: 20}}>
-          <Text style={{color: 'white', fontSize: 18}}>Uploader:</Text>
-          {uploader && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-around',
-              }}>
-              <Image
-                style={{height: 80, width: 80, borderRadius: 15}}
-                source={{uri: uploader.imageUrl}}
-              />
-              <View
-                style={{
-                  flex: 1,
-                  height: 90,
-                  padding: 15,
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: 10,
-                }}>
-                <Text style={{color: 'white', fontSize: 16}}>
-                  Address: {uploader.user.substring(0, 4)}....
-                  {uploader.user.substring(address.length - 4, address.length)}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    Clipboard.setString(address);
-                    ToastAndroid.show(
-                      'Address copied to clipboard',
-                      ToastAndroid.SHORT,
-                    );
-                  }}>
-                  <Image
-                    style={{height: 20, width: 20, tintColor: 'white'}}
-                    source={require('../assets/backgrounds/copy.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          <Text style={{color: 'white', fontSize: 18}}>Signers:</Text>
-          {signers &&
-            signers.map((item, index) => {
-              return (
-                <View
-                  key={index}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-around',
-                  }}>
-                  <Image
-                    style={{height: 80, width: 80, borderRadius: 15}}
-                    source={{uri: item.imageUrl}}
-                  />
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 90,
-                      padding: 10,
-                      justifyContent: 'space-around',
-                    }}>
-                    <View
-                      style={{
-                        height: 45,
-                        flexDirection: 'row',
-                        gap: 10,
-                        width: '100%',
-                        alignItems: 'center',
-                      }}>
-                      <Text style={{color: 'white', fontSize: 16}}>
-                        Address: {item.user.toString().substring(0, 4)}....
-                        {item.user.substring(
-                          item.user.length - 4,
-                          item.user.length,
-                        )}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          Clipboard.setString(item.user);
-                          ToastAndroid.show(
-                            'Address copied to clipboard',
-                            ToastAndroid.SHORT,
-                          );
-                        }}>
-                        <Image
-                          style={{height: 20, width: 20, tintColor: 'white'}}
-                          source={require('../assets/backgrounds/copy.png')}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    {item.signed ? (
-                      <View
-                        style={{
-                          backgroundColor: 'rgba(0,3,0,0.3)',
-                          borderColor: 'green',
-                          borderWidth: 2,
-                          width: 100,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 50,
-                          paddingVertical: 4,
-                        }}>
-                        <Text
-                          style={{
-                            color: 'green',
-                            fontSize: 12,
-                            fontWeight: 'bold',
-                          }}>
-                          Signed
-                        </Text>
-                      </View>
-                    ) : (
-                      <View
-                        style={{
-                          backgroundColor: 'rgba(0,3,0,0.3)',
-                          borderColor: 'red',
-                          borderWidth: 2,
-                          width: 100,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 50,
-                          paddingVertical: 4,
-                        }}>
-                        <Text
-                          style={{
-                            color: 'red',
-                            fontSize: 12,
-                            fontWeight: 'bold',
-                          }}>
-                          Not Signed
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          {signers &&
-            !signers.filter(
-              item =>
-                item.user.toString() === phantomWalletPublicKey.toString(),
-            )[0].signed && (
-              <>
-                <View
-                  style={{
-                    width: '100%',
-                    padding: 15,
-                    borderWidth: 1,
-                    borderColor: 'orange',
-                    borderRadius: 15,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 20,
-                  }}>
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: 16,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                    }}>
-                    Please read the document carefully before signing
-                  </Text>
-                </View>
-
-                <GestureHandlerRootView>
-                  <View style={{padding: 15, alignItems: 'center'}}>
-                    <PanGestureHandler onGestureEvent={gestureHandler}>
-                      <Animated.View
-                        style={{
-                          width: BUTTON_WIDTH,
-                          height: BUTTON_HEIGHT,
-                          backgroundColor: '#333',
-                          borderRadius: 5,
-                          padding: 5,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginBottom: 50,
-                        }}>
-                        <Animated.View
-                          style={[
-                            {
-                              width: SLIDER_WIDTH,
-                              height: SLIDER_WIDTH,
-                              borderRadius: 5,
-                              backgroundColor: '#d4ff0d',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            },
-                            sliderStyle,
-                          ]}>
-                          <Animated.Image
-                            source={require('../assets/next.png')}
-                            style={[
-                              {width: 28, height: 28, tintColor: 'white'},
-                              iconStyle,
-                            ]}
-                          />
-                        </Animated.View>
-                        <Animated.View
-                          style={[
-                            {
-                              position: 'absolute',
-                              left: SLIDER_WIDTH,
-                              right: 0,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            },
-                            textOpacity,
-                          ]}>
-                          <Text
-                            style={{
-                              color: 'white',
-                              fontSize: 18,
-                              fontWeight: 'bold',
-                            }}>
-                            Sign the document
-                          </Text>
-                        </Animated.View>
-                      </Animated.View>
-                    </PanGestureHandler>
-                  </View>
-                </GestureHandlerRootView>
-              </>
-            )}
-          <View style={{height: 50}} />
+  const renderSigner = (signer, index) => (
+    
+    <View key={index} style={styles.signerContainer}>
+      <Image source={{ uri: signer.imageUrl }} style={styles.avatar} />
+      <View style={styles.signerInfo}>
+        <Text style={styles.signerName}>{signer.user.substring(0, 4)}...{signer.user.substring(signer.user.length - 4)}</Text>
+        <View style={[styles.statusBadge, signer.signed ? styles.signedBadge : styles.unsignedBadge]}>
+          <Text style={styles.statusText}>{signer.signed ? 'Signed' : 'Not Signed'}</Text>
         </View>
-      </ScrollView>
-    );
-  };
-  return <EnhancedDarkThemeBackground children={<Children />} />;
-}
+      </View>
+      <TouchableOpacity
+        onPress={() => {
+          Clipboard.setString(signer.user);
+          ToastAndroid.show('Address copied to clipboard', ToastAndroid.SHORT);
+        }}
+      >
+        <Icon name="copy" size={20} color="#4CAF50" />
+      </TouchableOpacity>
+    </View>
+  );
+const Children=()=>{return(<GestureHandlerRootView>
+  <View style={styles.container}>
+  <StatusBar barStyle="light-content" />
+  <ScrollView contentContainerStyle={styles.scrollContent}>
+    <Text style={styles.title}>Document Details</Text>
+    
+    <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.documentPreview}>
+      <Image source={{ uri: imageUrl }} style={styles.documentImage} />
+      <LinearGradient
+        colors={['transparent', 'rgba(76, 175, 80, 0.8)']}
+        style={styles.previewOverlay}
+      >
+        <Icon name="eye" size={24} color="white" />
+        <Text style={styles.previewText}>View Document</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Uploader</Text>
+      {uploader && (
+        <View style={styles.uploaderContainer}>
+          <Image source={{ uri: uploader.imageUrl }} style={styles.avatar} />
+          <Text style={styles.uploaderName}>
+            {uploader.user.substring(0, 4)}...{uploader.user.substring(uploader.user.length - 4)}
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              Clipboard.setString(uploader.user);
+              ToastAndroid.show('Address copied to clipboard', ToastAndroid.SHORT);
+            }}
+          >
+            <Icon name="copy" size={20} color="#4CAF50" />
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Signers</Text>
+      {signers&&signers.map(renderSigner)}
+    </View>
+
+    {signers &&
+      !signers.filter(
+        item =>
+          item.user.toString() === phantomWalletPublicKey.toString(),
+      )[0]?.signed && (
+        <View style={styles.signButtonContainer}>
+          <PanGestureHandler onGestureEvent={gestureHandler}>
+            <Animated.View style={styles.signButton}>
+              <Animated.View style={[styles.slider, sliderStyle]}>
+                <Icon name="chevrons-right" size={35} color="#4CAF50" />
+              </Animated.View>
+              <Animated.Text style={[styles.signButtonText, textOpacity]}>
+                Slide to Sign
+              </Animated.Text>
+            </Animated.View>
+          </PanGestureHandler>
+        </View>
+      )}
+  </ScrollView>
+
+  <Modal
+    animationType="fade"
+    transparent={true}
+    visible={modalVisible}
+    onRequestClose={() => setModalVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <Image source={{ uri: imageUrl }} style={styles.modalImage} resizeMode="contain" />
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => setModalVisible(false)}
+      >
+        <Icon name="x" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
+  </Modal>
+</View>
+</GestureHandlerRootView>
+)}
+  return (
+    <EnhancedDarkThemeBackground children={<Children/>} />
+    
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    // backgroundColor: '#1E1E1E', // Dark background
+    paddingTop:StatusBar.currentHeight
+  },
+  scrollContent: {
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 20,
+  },
+  documentPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  documentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  previewOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: 15,
+  },
+  previewText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 10,
+  },
+  uploaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2A2A2A',
+    borderRadius: 10,
+    padding: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  uploaderName: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: 'white',
+  },
+  signerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2A2A2A',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+  },
+  signerInfo: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  signerName: {
+    fontSize: 16,
+    color: 'white',
+    marginBottom: 5,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+    alignSelf: 'flex-start',
+  },
+  signedBadge: {
+    backgroundColor: '#4CAF50',
+  },
+  unsignedBadge: {
+    backgroundColor: '#FF5722',
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  signButtonContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  signButton: {
+    width: BUTTON_WIDTH+4,
+    height: BUTTON_HEIGHT+4,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    padding:2
+  },
+  slider: {
+    position: 'absolute',
+    width: SLIDER_WIDTH - 4,
+    height: SLIDER_WIDTH - 4,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    left:2,
+    
+  },
+  signButtonText: {
+    color: '#4CAF50',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: '90%',
+    height: '80%',
+    borderRadius: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+    borderRadius: 20,
+    padding: 10,
+  },
+});
+
+export default DocumentDetail;
