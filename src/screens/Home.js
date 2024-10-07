@@ -1,5 +1,5 @@
 /*eslint-disable*/
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, {useCallback, useEffect, useState, useRef} from 'react';
 import {
   Alert,
   Dimensions,
@@ -13,27 +13,28 @@ import {
   RefreshControl,
   Animated,
 } from 'react-native';
-import { ActivityIndicator, IconButton } from 'react-native-paper';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {ActivityIndicator, IconButton} from 'react-native-paper';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import EnhancedDarkThemeBackground from './EnhancedDarkThemeBackground';
 import AccountInfo from '../components/AccountInfo';
-import { CONNECTION, getUserPDA, imageURI } from '../components/constants';
+import {CONNECTION, getUserPDA, imageURI} from '../components/constants';
 import usePhantomConnection from '../hooks/WalletContextProvider';
-import { Program } from '@project-serum/anchor';
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import {Program} from '@project-serum/anchor';
+import {PublicKey, SystemProgram, Transaction} from '@solana/web3.js';
 import idl from '../../contracts/idl/idl.json';
-import { launchCamera } from 'react-native-image-picker';
+import {launchCamera} from 'react-native-image-picker';
 import axios from 'axios';
 import firestore from '@react-native-firebase/firestore';
-import { LinearGradient } from 'react-native-linear-gradient';
+import {LinearGradient} from 'react-native-linear-gradient';
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 const ITEM_HEIGHT = (width - 60) / 2;
 const HEADER_HEIGHT = 120; // Adjust based on your AccountInfo component height
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity =
+  Animated.createAnimatedComponent(TouchableOpacity);
 
-export default function Home({ route }) {
+export default function Home({route}) {
   // ... (keep the existing state and hooks)
   const {width, height} = Dimensions.get('window');
   const {publicKey} = route.params;
@@ -85,12 +86,18 @@ export default function Home({ route }) {
     console.log(detaildocs);
     let i = 0;
     detaildocs.forEach(doc => {
-      if (doc.signers.toString().includes(phantomWalletPublicKey.toString())) {
+      if (doc?.signers.toString().includes(phantomWalletPublicKey.toString())) {
         arr.push({...doc});
       }
       i++;
     });
-    arr.push({"date": "019260585376", "id": "01926058534a", "imageHash": "QmQ1z7J7GNtALcHnrL8kZjgkGMLymbC5NPN82uwRNq2CkA", "signers": ["8RrgQYBoZezgfpB9x77EYGyMW9Rp1WUWubP22uCnqjHi"], "uploader": "8RrgQYBoZezgfpB9x77EYGyMW9Rp1WUWubP22uCnqjHi"})
+    arr.push({
+      date: '019260585376',
+      id: '01926058534a',
+      imageHash: 'QmQ1z7J7GNtALcHnrL8kZjgkGMLymbC5NPN82uwRNq2CkA',
+      signers: ['8RrgQYBoZezgfpB9x77EYGyMW9Rp1WUWubP22uCnqjHi'],
+      uploader: '8RrgQYBoZezgfpB9x77EYGyMW9Rp1WUWubP22uCnqjHi',
+    });
     setdocuments(arr);
   };
   const checkUser = async pubKey => {
@@ -197,52 +204,53 @@ export default function Home({ route }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
 
-  const renderDocument = useCallback(({ item, index }) => {
-    const inputRange = [
-      -1,
-      0,
-      ITEM_HEIGHT * index,
-      ITEM_HEIGHT * (index + 2)
-    ];
-    const scale = scrollY.interpolate({
-      inputRange,
-      outputRange: [1, 1, 1, 0.9],
-      extrapolate: 'clamp',
-    });
-    const opacity = scrollY.interpolate({
-      inputRange,
-      outputRange: [1, 1, 1, 0.5],
-      extrapolate: 'clamp',
-    });
+  const renderDocument = useCallback(
+    ({item, index}) => {
+      const inputRange = [
+        -1,
+        0,
+        ITEM_HEIGHT * index,
+        ITEM_HEIGHT * (index + 2),
+      ];
+      const scale = scrollY.interpolate({
+        inputRange,
+        outputRange: [1, 1, 1, 0.9],
+        extrapolate: 'clamp',
+      });
+      const opacity = scrollY.interpolate({
+        inputRange,
+        outputRange: [1, 1, 1, 0.5],
+        extrapolate: 'clamp',
+      });
 
-    return (
-      <AnimatedTouchableOpacity
-        activeOpacity={0.7}
-        onPress={() =>
-          navigation.navigate('DocumentDetail', {
-            imageUri: imageURI + item.imageHash,
-            signers: item.signers.toString(),
-            uploader: item.uploader.toString(),
-            docId: item.id.toString(),
-          })
-        }
-        style={[styles.documentItem, { transform: [{ scale }], opacity }]}
-      >
-        <Image
-          source={{ uri: imageURI + item.imageHash }}
-          style={styles.documentImage}
-        />
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.7)']}
-          style={styles.documentOverlay}
-        >
-          <Text style={styles.documentText} numberOfLines={1}>
-            Doc {item.id.toString().slice(0, 8)}
-          </Text>
-        </LinearGradient>
-      </AnimatedTouchableOpacity>
-    );
-  }, [navigation, imageURI]);
+      return (
+        <AnimatedTouchableOpacity
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('DocumentDetail', {
+              imageUri: imageURI + item.imageHash,
+              signers: item.signers.toString(),
+              uploader: item.uploader.toString(),
+              docId: item.id.toString(),
+            })
+          }
+          style={[styles.documentItem, {transform: [{scale}], opacity}]}>
+          <Image
+            source={{uri: imageURI + item.imageHash}}
+            style={styles.documentImage}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.7)']}
+            style={styles.documentOverlay}>
+            <Text style={styles.documentText} numberOfLines={1}>
+              Doc {item.id.toString().slice(0, 8)}
+            </Text>
+          </LinearGradient>
+        </AnimatedTouchableOpacity>
+      );
+    },
+    [navigation, imageURI],
+  );
 
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, HEADER_HEIGHT],
@@ -273,13 +281,14 @@ export default function Home({ route }) {
         </View>
       ) : (
         <>
-          <Animated.View style={[
-            styles.header,
-            {
-              transform: [{ translateY: headerTranslateY }],
-              opacity: headerOpacity,
-            }
-          ]}>
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                transform: [{translateY: headerTranslateY}],
+                opacity: headerOpacity,
+              },
+            ]}>
             <AccountInfo publicKey={publicKey} />
           </Animated.View>
           {documents && (
@@ -287,11 +296,11 @@ export default function Home({ route }) {
               ref={flatListRef}
               data={documents}
               numColumns={2}
-              keyExtractor={(item) => item.toString()}
+              keyExtractor={item => item.toString()}
               renderItem={renderDocument}
               contentContainerStyle={[
                 styles.documentList,
-                { paddingTop: HEADER_HEIGHT+150 }
+                {paddingTop: HEADER_HEIGHT + 150},
               ]}
               refreshControl={
                 <RefreshControl
@@ -301,22 +310,20 @@ export default function Home({ route }) {
                 />
               }
               onScroll={Animated.event(
-                [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                { useNativeDriver: true }
+                [{nativeEvent: {contentOffset: {y: scrollY}}}],
+                {useNativeDriver: true},
               )}
               scrollEventThrottle={16}
-              style={{ transform: [{ translateY: contentTranslateY }] }}
+              style={{transform: [{translateY: contentTranslateY}]}}
             />
           )}
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('AddImage', { publicKey })}
-            style={styles.addButton}
-          >
+            onPress={() => navigation.navigate('AddImage', {publicKey})}
+            style={styles.addButton}>
             <LinearGradient
               colors={['#4CAF50', '#45a049']}
-              style={styles.addButtonGradient}
-            >
+              style={styles.addButtonGradient}>
               <IconButton icon="plus" size={30} iconColor="#fff" />
             </LinearGradient>
           </TouchableOpacity>
@@ -366,7 +373,6 @@ const styles = {
     borderRadius: 15,
     overflow: 'hidden',
     elevation: 8,
-
   },
   documentImage: {
     height: '100%',
@@ -402,5 +408,3 @@ const styles = {
     padding: 5,
   },
 };
-
-
